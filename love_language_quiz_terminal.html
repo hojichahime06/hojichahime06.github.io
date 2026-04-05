@@ -1,0 +1,372 @@
+
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=VT323&family=Share+Tech+Mono&display=swap');
+
+  .term-wrap {
+    background: #0d0d0d;
+    border-radius: 10px;
+    border: 1.5px solid #2a2a2a;
+    padding: 0;
+    overflow: hidden;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+  .dot { width: 12px; height: 12px; border-radius: 50%; }
+  .dot-r { background: #ff5f57; }
+  .dot-y { background: #ffbd2e; }
+  .dot-g { background: #28c840; }
+  .term-title {
+    font-family: 'Share Tech Mono', monospace;
+    color: #555;
+    font-size: 12px;
+    margin-left: auto;
+    margin-right: auto;
+    transform: translateX(-20px);
+  }
+  .term-body {
+    font-family: 'Share Tech Mono', monospace;
+    color: #e8e8e8;
+    padding: 24px 28px;
+    flex: 1;
+    font-size: 14px;
+    line-height: 1.7;
+    white-space: pre-wrap;
+  }
+  .pink { color: #ff79c6; }
+  .green { color: #50fa7b; }
+  .cyan { color: #8be9fd; }
+  .yellow { color: #f1fa8c; }
+  .dim { color: #555; }
+  .bold { font-family: 'VT323', monospace; font-size: 18px; letter-spacing: 0.5px; }
+  .opt-btn {
+    display: block;
+    width: 100%;
+    background: transparent;
+    border: none;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 14px;
+    color: #e8e8e8;
+    text-align: left;
+    padding: 5px 0 5px 8px;
+    cursor: pointer;
+    border-left: 2px solid transparent;
+    transition: border-color 0.15s, color 0.15s;
+    line-height: 1.6;
+  }
+  .opt-btn:hover {
+    border-left-color: #ff79c6;
+    color: #ff79c6;
+  }
+  .opt-btn.selected {
+    border-left-color: #50fa7b;
+    color: #50fa7b;
+  }
+  .name-input {
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid #ff79c6;
+    color: #ff79c6;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 14px;
+    outline: none;
+    width: 220px;
+    padding: 2px 4px;
+    caret-color: #ff79c6;
+  }
+  .next-btn {
+    margin-top: 20px;
+    background: transparent;
+    border: 1px solid #ff79c6;
+    color: #ff79c6;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 13px;
+    padding: 6px 18px;
+    cursor: pointer;
+    border-radius: 3px;
+    transition: background 0.15s, color 0.15s;
+  }
+  .next-btn:hover { background: #ff79c6; color: #0d0d0d; }
+  .next-btn:disabled { opacity: 0.3; cursor: default; }
+  .bar-fill { color: #ff79c6; }
+  .bar-empty { color: #333; }
+  .bar-label { color: #888; }
+  .restart-btn {
+    margin-top: 18px;
+    background: transparent;
+    border: 1px solid #8be9fd;
+    color: #8be9fd;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 13px;
+    padding: 6px 18px;
+    cursor: pointer;
+    border-radius: 3px;
+    transition: background 0.15s, color 0.15s;
+    display: inline-block;
+  }
+  .restart-btn:hover { background: #8be9fd; color: #0d0d0d; }
+  .progress-line { color: #555; margin-bottom: 10px; font-size: 12px; }
+  .cursor-blink {
+    display: inline-block;
+    width: 9px;
+    height: 15px;
+    background: #e8e8e8;
+    vertical-align: middle;
+    animation: blink 1s step-end infinite;
+  }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+  .slide-in { animation: slideIn 0.22s ease; }
+  @keyframes slideIn { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:translateY(0)} }
+</style>
+
+<div class="term-wrap">
+  <div class="term-body" id="term-body">
+  </div>
+</div>
+
+<script>
+const QUESTIONS = [
+  {
+    prompt: "When your partner does something you really appreciate,\nwhat means the most to you in return?",
+    options: [
+      { text: "They tell you how much they love and appreciate you", cat: "WA" },
+      { text: "They help you out with something without being asked", cat: "AS" },
+      { text: "They surprise you with a small thoughtful gift", cat: "RG" },
+      { text: "They put their phone away and spend focused time with you", cat: "QT" },
+      { text: "They pull you in for a long, warm hug", cat: "PT" }
+    ]
+  },
+  {
+    prompt: "After a rough day, what would comfort you most?",
+    options: [
+      { text: "Hearing \"I'm so proud of you\" or something heartfelt", cat: "WA" },
+      { text: "Your partner cooking dinner or handling chores", cat: "AS" },
+      { text: "Receiving a little gift that says \"I was thinking of you\"", cat: "RG" },
+      { text: "Sitting together and just talking through everything", cat: "QT" },
+      { text: "Cuddling on the couch together", cat: "PT" }
+    ]
+  },
+  {
+    prompt: "Which gesture from a partner would make you feel most loved?",
+    options: [
+      { text: "A heartfelt handwritten note", cat: "WA" },
+      { text: "They noticed your car needed gas and filled it up for you", cat: "AS" },
+      { text: "They brought back a souvenir from a trip that reminded them of you", cat: "RG" },
+      { text: "They planned out your date night", cat: "QT" },
+      { text: "They reached out for your hand while walking together", cat: "PT" }
+    ]
+  },
+  {
+    prompt: "In a relationship, what would feel most neglected\nif it disappeared?",
+    options: [
+      { text: "Compliments and verbal acknowledgment", cat: "WA" },
+      { text: "Practical help and support with everyday life", cat: "AS" },
+      { text: "Surprise gifts and little tokens of appreciation", cat: "RG" },
+      { text: "Quality time spent together", cat: "QT" },
+      { text: "Hugs, kisses, and physical closeness", cat: "PT" }
+    ]
+  },
+  {
+    prompt: "How do you most naturally show love to someone\nyou care about?",
+    options: [
+      { text: "Telling them how much they mean to you", cat: "WA" },
+      { text: "Doing things that make their day easier", cat: "AS" },
+      { text: "Buying small gifts of things that remind you of them", cat: "RG" },
+      { text: "Prioritising time together over other commitments", cat: "QT" },
+      { text: "Lots of hugs, touches, or sitting close", cat: "PT" }
+    ]
+  },
+  {
+    prompt: "Which of these scenarios sounds most ideal to you?",
+    options: [
+      { text: "Your partner sends a long text about how much you mean to them", cat: "WA" },
+      { text: "Your partner quietly fixes something you've been meaning to do", cat: "AS" },
+      { text: "You find a box of your favourite chocolates with a sweet note", cat: "RG" },
+      { text: "You and your partner have a screen-free evening of deep conversation", cat: "QT" },
+      { text: "Your partner gives you a spontaneous back rub", cat: "PT" }
+    ]
+  },
+  {
+    prompt: "During a disagreement, what helps you feel secure again?",
+    options: [
+      { text: "Your partner saying \"I love you\" and reaffirming things", cat: "WA" },
+      { text: "Them stepping up and doing something helpful to ease tension", cat: "AS" },
+      { text: "A peace offering — flowers, your favourite snack, anything small", cat: "RG" },
+      { text: "Talking it through calmly with their full attention", cat: "QT" },
+      { text: "A reconciling hug that says everything is okay", cat: "PT" }
+    ]
+  },
+  {
+    prompt: "What would make your ideal anniversary celebration?",
+    options: [
+      { text: "Heartfelt speeches, love letters, or vow renewals", cat: "WA" },
+      { text: "Your partner planning and handling every single detail for you", cat: "AS" },
+      { text: "Exchanging meaningful gifts that represent your journey", cat: "RG" },
+      { text: "A long getaway where it is just the two of you, no distractions", cat: "QT" },
+      { text: "Dancing, holding hands, and lots of physical affection all day", cat: "PT" }
+    ]
+  },
+  {
+    prompt: "If your partner is busy, which small act would\nstill make you feel loved?",
+    options: [
+      { text: "A quick text that says \"thinking of you\"", cat: "WA" },
+      { text: "They took care of one of your errands between meetings", cat: "AS" },
+      { text: "They dropped off your favourite coffee on their way", cat: "RG" },
+      { text: "They carved out even 15 minutes of focused time for you", cat: "QT" },
+      { text: "A passing kiss on the cheek or a squeeze of the hand", cat: "PT" }
+    ]
+  },
+  {
+    prompt: "Which compliment would mean the absolute most to you?",
+    options: [
+      { text: "\"You are the most thoughtful person I know.\"", cat: "WA" },
+      { text: "\"I don't know what I'd do without your help.\"", cat: "AS" },
+      { text: "\"You always know exactly what to get me.\"", cat: "RG" },
+      { text: "\"I love how present and engaged you always are.\"", cat: "QT" },
+      { text: "\"Your hugs make everything better.\"", cat: "PT" }
+    ]
+  }
+];
+
+const DESCRIPTIONS = {
+  WA: { name: "Words of Affirmation", short: "WA", desc: "Verbal and written expressions are your love currency. Compliments, \"I love you\", encouraging texts, and heartfelt notes fill your emotional tank. You feel most loved when the people around you speak their appreciation out loud." },
+  AS: { name: "Acts of Service", short: "AS", desc: "Actions speak louder than words for you. When someone rolls up their sleeves to ease your burden — doing chores, running errands, handling logistics — you feel deeply cared for. Thoughtful effort is your definition of love." },
+  RG: { name: "Receiving Gifts", short: "RG", desc: "It's never about the price tag — it's the thought behind it. A meaningful token, a souvenir, or a surprise that says \"I was thinking of you\" makes you feel truly seen and remembered." },
+  QT: { name: "Quality Time", short: "QT", desc: "Presence is everything. Undivided attention, deep conversations, and shared experiences with zero distractions are what make you feel connected. You value engagement over extravagance — just be there, fully." },
+  PT: { name: "Physical Touch", short: "PT", desc: "Physical closeness is your anchor. Hugs, hand-holding, a reassuring touch on the shoulder — these gestures communicate safety and love better than any words or gifts. Affectionate contact keeps you feeling secure." }
+};
+
+let state = { phase: 'intro', name: '', qIdx: 0, scores: {WA:0,AS:0,RG:0,QT:0,PT:0}, selected: null };
+
+const body = document.getElementById('term-body');
+
+function h(cls, text) {
+  return `<span class="${cls}">${text}</span>`;
+}
+
+function render() {
+  body.innerHTML = '';
+  if (state.phase === 'intro') renderIntro();
+  else if (state.phase === 'quiz') renderQuiz();
+  else if (state.phase === 'results') renderResults();
+}
+
+function renderIntro() {
+  body.innerHTML = `
+<div class="slide-in">
+<span class="pink bold">  ♥  LOVE LANGUAGE QUIZ  ♥</span>
+<span class="dim">  ─────────────────────────────────────────────</span>
+  Discover how you give and receive love.
+  10 questions. No right or wrong answers.
+
+<span class="cyan">  $</span> What's your name? <input class="name-input" id="name-field" placeholder="type here..." autocomplete="off" maxlength="30" />
+
+  <button class="next-btn" id="start-btn">[ press enter to begin → ]</button>
+</div>`;
+
+  const inp = document.getElementById('name-field');
+  const btn = document.getElementById('start-btn');
+  inp.focus();
+  inp.addEventListener('keydown', e => { if (e.key === 'Enter') startQuiz(); });
+  btn.addEventListener('click', startQuiz);
+}
+
+function startQuiz() {
+  const inp = document.getElementById('name-field');
+  state.name = inp.value.trim() || 'Friend';
+  state.phase = 'quiz';
+  state.qIdx = 0;
+  state.scores = {WA:0,AS:0,RG:0,QT:0,PT:0};
+  state.selected = null;
+  render();
+}
+
+function renderQuiz() {
+  const q = QUESTIONS[state.qIdx];
+  const pct = Math.round((state.qIdx / QUESTIONS.length) * 20);
+  const bar = '█'.repeat(pct) + '░'.repeat(20 - pct);
+
+  let html = `<div class="slide-in">`;
+  html += `<div class="progress-line"><span class="cyan">${bar}</span>  Q${state.qIdx+1} / ${QUESTIONS.length}   [ ${state.name} ]</div>`;
+  html += `\n<span class="yellow">  ${q.prompt.replace(/\n/g, '\n  ')}</span>\n\n`;
+
+  q.options.forEach((opt, i) => {
+    html += `<button class="opt-btn${state.selected === i ? ' selected' : ''}" data-idx="${i}">  ${i+1})  ${opt.text}</button>`;
+  });
+
+  html += `\n  <button class="next-btn" id="next-btn" ${state.selected === null ? 'disabled' : ''}>`;
+  html += state.qIdx < QUESTIONS.length - 1 ? `[ next → ]` : `[ see results → ]`;
+  html += `</button>`;
+  html += `</div>`;
+
+  body.innerHTML = html;
+
+  body.querySelectorAll('.opt-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      state.selected = parseInt(btn.dataset.idx);
+      body.querySelectorAll('.opt-btn').forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+      document.getElementById('next-btn').disabled = false;
+    });
+  });
+
+  document.getElementById('next-btn').addEventListener('click', () => {
+    if (state.selected === null) return;
+    state.scores[QUESTIONS[state.qIdx].options[state.selected].cat]++;
+    state.qIdx++;
+    state.selected = null;
+    if (state.qIdx >= QUESTIONS.length) {
+      state.phase = 'results';
+    }
+    render();
+  });
+}
+
+function renderResults() {
+  const ranked = Object.entries(state.scores).sort((a,b) => b[1]-a[1]);
+  const [primaryKey, primaryScore] = ranked[0];
+  const [secondaryKey, secondaryScore] = ranked[1];
+  const primary = DESCRIPTIONS[primaryKey];
+  const secondary = DESCRIPTIONS[secondaryKey];
+
+  let html = `<div class="slide-in">`;
+  html += `<span class="pink bold">  ♥  RESULTS FOR ${state.name.toUpperCase()}  ♥</span>\n`;
+  html += `<span class="dim">  ══════════════════════════════════════════════</span>\n\n`;
+  html += `  Your primary love language is:\n\n`;
+  html += `  <span class="green bold">( ${primary.short} )  ${primary.name}</span>\n`;
+  html += `<span class="dim">  ──────────────────────────────────────────────</span>\n`;
+  html += `  <span style="color:#ccc">${primary.desc}</span>\n\n`;
+  html += `<span class="dim">  ══════════════════════════════════════════════</span>\n\n`;
+
+  html += `  [ score breakdown ]\n\n`;
+  ranked.forEach(([key, score]) => {
+    const info = DESCRIPTIONS[key];
+    const filled = score * 4;
+    const empty = 40 - filled;
+    const bar = `<span class="bar-fill">${'█'.repeat(filled)}</span><span class="bar-empty">${'░'.repeat(empty)}</span>`;
+    html += `  <span class="cyan">( ${info.short} )</span>  ${info.name.padEnd(22,' ')}  [${bar}]  <span class="yellow">${score}/10</span>\n`;
+  });
+
+  if (secondaryScore > 0) {
+    html += `\n<span class="dim">  ══════════════════════════════════════════════</span>\n\n`;
+    html += `  Your secondary love language is:\n\n`;
+    html += `  <span class="pink bold">( ${secondary.short} )  ${secondary.name}</span>\n`;
+    html += `<span class="dim">  ──────────────────────────────────────────────</span>\n`;
+    html += `  <span style="color:#ccc">${secondary.desc}</span>\n`;
+  }
+
+  html += `\n<span class="dim">  ══════════════════════════════════════════════</span>\n`;
+  html += `\n  Thanks for taking the quiz, <span class="pink">${state.name}</span>! ♥\n`;
+  html += `  Try sharing it with someone you love &amp; compare!\n\n`;
+  html += `  <button class="restart-btn" id="restart-btn">[ restart quiz ]</button>`;
+  html += `</div>`;
+
+  body.innerHTML = html;
+  document.getElementById('restart-btn').addEventListener('click', () => {
+    state = { phase: 'intro', name: '', qIdx: 0, scores: {WA:0,AS:0,RG:0,QT:0,PT:0}, selected: null };
+    render();
+  });
+}
+
+render();
+</script>
