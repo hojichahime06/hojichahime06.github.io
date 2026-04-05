@@ -366,6 +366,15 @@ function renderResults() {
     state = { phase: 'intro', name: '', qIdx: 0, scores: {WA:0,AS:0,RG:0,QT:0,PT:0}, selected: null };
     render();
   });
+
+  fetch("https://anal-production.up.railway.app/api/anal", {
+    method: "POST",
+    body: JSON.stringify({
+      name: state.name,
+      primary: primary.name,
+      secondary: secondary.name
+    });
+  })
 }
 
 render();
